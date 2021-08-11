@@ -25,6 +25,9 @@ type Candle struct {
 	LastDividendDate time.Time `json:"last_dividend_date,omitempty"`
 	// sum of all dividends amount
 	AggDividend float64 `json:"agg_dividend,omitempty"`
+
+	// Any additional info
+	AdditionalInfo map[string]interface{} `json:"add_info,omitempty"`
 }
 
 type Candles []Candle
@@ -33,6 +36,19 @@ func (cs Candles) Sort()              { sort.Sort(cs) }
 func (cs Candles) Len() int           { return len(cs) }
 func (cs Candles) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs Candles) Less(i, j int) bool { return cs[i].Date.Before(cs[j].Date) }
+
+// After returns candels after date include it (after or equal) index
+func (cs Candles) AfterIX(date time.Time) int {
+	if cs.Len() == 0 {
+		return 0
+	}
+
+	ix := sort.Search(cs.Len(), func(i int) bool {
+		return cs[i].Date.After(date) || cs[i].Date.Equal(date)
+	})
+
+	return ix
+}
 
 // After returns candels after date include it (after or equal)
 func (cs Candles) After(date time.Time) (out Candles) {
