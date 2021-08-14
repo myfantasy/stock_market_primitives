@@ -154,7 +154,7 @@ func (cs Candles) Aggregate(aggFrame time.Duration) (out Candles) {
 		}
 
 		current.High = math.Max(current.High, c.High)
-		current.Low = math.Max(current.Low, c.Low)
+		current.Low = math.Min(current.Low, c.Low)
 		current.Close = c.Close
 		current.Vol += c.Vol
 
