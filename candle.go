@@ -75,6 +75,29 @@ func (cs Candles) Before(date time.Time) (out Candles) {
 
 	return cs[:ix]
 }
+
+func (cs Candles) Bounds() (firstDate time.Time, lastDate time.Time, min float64, max float64) {
+	if cs.Len() == 0 {
+		return
+	}
+
+	firstDate = cs[0].Start
+	lastDate = cs[cs.Len()-1].Date
+	min = cs[0].Low
+	max = cs[0].High
+
+	for _, c := range cs {
+		if min > c.Low {
+			min = c.Low
+		}
+		if max < c.High {
+			max = c.High
+		}
+	}
+
+	return
+}
+
 func (cs Candles) Clone() (res Candles) {
 	res = make(Candles, 0, cs.Len())
 	for i := 0; i < cs.Len(); i++ {
