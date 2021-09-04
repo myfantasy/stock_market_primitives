@@ -1,11 +1,9 @@
 package smp
 
 import (
-	"encoding/json"
 	"math"
 	"time"
 
-	"github.com/myfantasy/mfs"
 	"github.com/myfantasy/mft"
 )
 
@@ -28,119 +26,9 @@ const (
 	SellOrderCreate Operation = "sell_order_create"
 )
 
-// DefaultStrategyGenerator used for marshal and unmarhal to Json StrategyStorage
-var DefaultStrategyGenerator = StrategyGeneratorCreate()
-
-type StrategyCreator func() (s Strategy)
-type StrategyLoader func(data json.RawMessage) (s Strategy, err *mft.Error)
-
-type StrategyGenerator struct {
-	Creators map[string]StrategyCreator
-	Loaders  map[string]StrategyLoader
-
-	Mx mfs.PMutex
-}
-
-func StrategyGeneratorCreate() (sg *StrategyGenerator) {
-	return &StrategyGenerator{
-		Creators: make(map[string]StrategyCreator),
-		Loaders:  make(map[string]StrategyLoader),
-	}
-}
-
-func (sg *StrategyGenerator) Add(typeStrategy string, creator StrategyCreator, loader StrategyLoader) {
-	sg.Mx.Lock()
-	defer sg.Mx.Unlock()
-
-	sg.Creators[typeStrategy] = creator
-	sg.Loaders[typeStrategy] = loader
-}
-
-func (sg *StrategyGenerator) Exists(typeStrategy string) (ok bool) {
-	sg.Mx.RLock()
-	defer sg.Mx.RUnlock()
-
-	_, ok = sg.Creators[typeStrategy]
-	return ok
-}
-func (sg *StrategyGenerator) Create(typeStrategy string) (s Strategy, err *mft.Error) {
-	sg.Mx.RLock()
-	defer sg.Mx.RUnlock()
-
-	cr, ok := sg.Creators[typeStrategy]
-	if !ok {
-		return nil, GenerateError(25000000, typeStrategy)
-	}
-
-	return cr(), nil
-}
-func (sg *StrategyGenerator) Load(typeStrategy string, data json.RawMessage) (s Strategy, err *mft.Error) {
-	sg.Mx.RLock()
-	defer sg.Mx.RUnlock()
-
-	ld, ok := sg.Loaders[typeStrategy]
-	if !ok {
-		return nil, GenerateError(25000000, typeStrategy)
-	}
-
-	s, err = ld(data)
-
-	if err != nil {
-		return nil, GenerateErrorE(25000001, err, typeStrategy)
-	}
-
-	return s, nil
-}
-
-type StrategyStorage struct {
-	Starategy map[string]Strategy
-
-	Mx mfs.PMutex
-}
-
-func StrategyStorageCreate() (ss *StrategyStorage) {
-	return &StrategyStorage{
-		Starategy: make(map[string]Strategy),
-	}
-}
-
-func (ss *StrategyStorage) MarshalJSON() ([]byte, error) {
-	res := make(map[string]JsonTypedContainer)
-
-	for k, s := range ss.Starategy {
-		res[k] = JsonTypedContainer{
-			Type: s.Type(),
-			Data: s.Marshal(),
-		}
-	}
-
-	return json.Marshal(res)
-}
-
-func (ss *StrategyStorage) UnmarshalJSON(b []byte) (err error) {
-	var cont map[string]JsonTypedContainer
-
-	err = json.Unmarshal(b, &cont)
-	if err != nil {
-		return GenerateErrorE(25000020, err)
-	}
-
-	ss.Starategy = make(map[string]Strategy)
-
-	for k, data := range cont {
-		s, errM := DefaultStrategyGenerator.Load(data.Type, data.Data)
-		if errM != nil {
-			return GenerateErrorE(25000021, errM, data.Type)
-		}
-		ss.Starategy[k] = s
-	}
-
-	return nil
-}
-
 type StepParams interface {
-	GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) Candles
-	GetOrderBook(instrumentId string, ticker string) OrderBook
+	GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) (cs Candles, err *mft.Error)
+	GetOrderBook(instrumentId string, ticker string) (ob *OrderBook, err *mft.Error)
 
 	BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error)
 	SellByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error)
@@ -156,7 +44,7 @@ type StepParams interface {
 }
 
 type Position struct {
-	TnstrumentId string
+	InstrumentId string
 	Ticker       string
 	Cnt          int
 	BuyPrice     float64
@@ -165,7 +53,7 @@ type Position struct {
 	IsSell       bool
 }
 type Log struct {
-	TnstrumentId string
+	InstrumentId string
 	Ticker       string
 	Cnt          int
 	Price        float64
@@ -181,8 +69,6 @@ type Status interface {
 }
 
 type Strategy interface {
-	Type() string
-	Marshal() json.RawMessage
 	Step(p StepParams)
 
 	Status() Status
@@ -196,15 +82,16 @@ func Round0(price float64) float64 {
 
 type VirtualMarket struct {
 	Candles   Candles
-	OrderBook OrderBook
+	OrderBook *OrderBook
 	Position  int
 }
 
-func (vm *VirtualMarket) GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) Candles {
-	return vm.Candles.After(dateFrom).Before(dateTo).Before(vm.OrderBook.Time).Clone()
+func (vm *VirtualMarket) GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) (cs Candles, err *mft.Error) {
+	return vm.Candles.After(dateFrom).Before(dateTo).Before(vm.OrderBook.Time).Clone(),
+		nil
 }
-func (vm *VirtualMarket) GetOrderBook(instrumentId string, ticker string) OrderBook {
-	return vm.OrderBook
+func (vm *VirtualMarket) GetOrderBook(instrumentId string, ticker string) (ob *OrderBook, err *mft.Error) {
+	return vm.OrderBook, nil
 }
 func (vm *VirtualMarket) BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
 	return "", nil

@@ -7,13 +7,7 @@ import (
 )
 
 // Errors codes and description
-var Errors map[int]string = map[int]string{
-	25000000: "StrategyGenerator.Create: strategy type `%v` not found",
-	25000001: "StrategyGenerator.Load: strategy type `%v` load error",
-
-	25000020: "StrategyStorage.UnmarshalJSON: fail to unmarshal map of JsonTypedContainer",
-	25000021: "StrategyStorage.UnmarshalJSON: fail to load strategy type `%v` (used smp.DefaultStrategyGenerator)",
-}
+var Errors map[int]string = map[int]string{}
 
 // GenerateError -
 func GenerateError(key int, a ...interface{}) *mft.Error {

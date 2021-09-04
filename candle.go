@@ -195,8 +195,8 @@ func (cs Candles) FillDividents(ds Dividends) (out Candles) {
 }
 
 // OrderBook Generates order_book
-func (c *Candle) OrderBook() OrderBook {
-	ob := OrderBook{
+func (c *Candle) OrderBook() *OrderBook {
+	ob := &OrderBook{
 		InstrumentId: c.InstrumentId,
 		Ticker:       c.Ticker,
 
