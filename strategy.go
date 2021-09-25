@@ -26,9 +26,15 @@ const (
 	SellOrderCreate Operation = "sell_order_create"
 )
 
+type LotPrices struct {
+	Count int
+	Price float64
+}
+
 type StepParams interface {
 	GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) (cs Candles, err *mft.Error)
 	GetOrderBook(instrumentId string, ticker string) (ob *OrderBook, err *mft.Error)
+	GetInstrumentInfo(instrumentId string, ticker string) (instrumentInfo *InstrumentInfo, err *mft.Error)
 
 	BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error)
 	SellByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error)
@@ -39,94 +45,46 @@ type StepParams interface {
 	CancelBuyOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error)
 	CancelSellOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error)
 
-	StatusBuyOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, err *mft.Error)
-	StatusSellOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, err *mft.Error)
+	StatusBuyOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, prices []LotPrices, err *mft.Error)
+	StatusSellOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, prices []LotPrices, err *mft.Error)
 }
 
-type Position struct {
-	InstrumentId string
-	Ticker       string
-	Cnt          int
-	BuyPrice     float64
-	OrderId      string
-	IsComplete   bool
-	IsSell       bool
-}
-type Log struct {
-	InstrumentId string
-	Ticker       string
-	Cnt          int
-	Price        float64
-	Operation    Operation
+type StartegyStatus struct {
+	IsOnline bool `json:"is_online"`
 }
 
-type Positions []Position
-type Logs []Log
+type Command string
 
-type Status interface {
-	Profit() float64
-	Positions() Positions
-}
+const (
+	StartCommand Command = "start"
+	StopCommand  Command = "stop"
+	ShowCommand  Command = "show"
+)
 
 type Strategy interface {
-	Step(p StepParams)
-
-	Status() Status
-
-	Logs() Logs
+	Step(p StepParams) (err *mft.Error)
+	Status() StartegyStatus
+	String() string
+	Command(cmd Command, params map[string]string) (ok bool, err *mft.Error)
+	AllowCommands() map[Command]string
 }
 
-func Round0(price float64) float64 {
-	return math.Round(price*1000000) / 1000000
-}
-
-type VirtualMarket struct {
-	Candles   Candles
-	OrderBook *OrderBook
-	Position  int
-}
-
-func (vm *VirtualMarket) GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) (cs Candles, err *mft.Error) {
-	return vm.Candles.After(dateFrom).Before(dateTo).Before(vm.OrderBook.Time).Clone(),
-		nil
-}
-func (vm *VirtualMarket) GetOrderBook(instrumentId string, ticker string) (ob *OrderBook, err *mft.Error) {
-	return vm.OrderBook, nil
-}
-func (vm *VirtualMarket) BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
-	return "", nil
-}
-func (vm *VirtualMarket) SellByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
-	return "", nil
-}
-func (vm *VirtualMarket) BuyByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error) {
-	return "", nil
-}
-func (vm *VirtualMarket) SellByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error) {
-	return "", nil
-}
-func (vm *VirtualMarket) CancelBuyOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error) {
-	return false, nil
-}
-func (vm *VirtualMarket) CancelSellOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error) {
-	return false, nil
-}
-func (vm *VirtualMarket) StatusBuyOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, err *mft.Error) {
-	return Complete, nil
-}
-func (vm *VirtualMarket) StatusSellOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, err *mft.Error) {
-	return Complete, nil
-}
-
-func (vm *VirtualMarket) DoStep() bool {
-	if vm.Position >= vm.Candles.Len() {
-		return false
+func Round(price float64, point int) float64 {
+	if point == 0 {
+		return math.Round(price)
 	}
-	vm.Position++
-	if vm.Position >= vm.Candles.Len() {
-		return false
+	mult := 1.0
+	if point > 0 {
+		for i := 0; i < point; i++ {
+			mult = mult * 10
+		}
+		return math.Round(price*mult) / mult
 	}
-
-	vm.OrderBook = vm.Candles[vm.Position].OrderBook()
-	return true
+	if point < 0 {
+		for i := 0; i < -point; i++ {
+			mult = mult + 10
+		}
+		return math.Round(price/mult) * mult
+	}
+	return math.Round(price)
 }

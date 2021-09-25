@@ -59,3 +59,10 @@ func (ob *OrderBook) SellPrice() float64 {
 	}
 	return ob.LastPrice
 }
+
+type InstrumentInfo struct {
+	InstrumentId string `json:"instrument_id"`
+	Ticker       string `json:"ticker"`
+
+	LotSize int `json:"lot_size"`
+}
