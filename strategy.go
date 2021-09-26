@@ -67,6 +67,7 @@ type Strategy interface {
 	String() string
 	Command(cmd Command, params map[string]string) (ok bool, err *mft.Error)
 	AllowCommands() map[Command]string
+	Description() string
 }
 
 func Round(price float64, point int) float64 {

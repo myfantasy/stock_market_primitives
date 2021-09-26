@@ -64,5 +64,6 @@ type InstrumentInfo struct {
 	InstrumentId string `json:"instrument_id"`
 	Ticker       string `json:"ticker"`
 
-	LotSize int `json:"lot_size"`
+	LotSize int     `json:"lot_size"`
+	MinStep float64 `json:"min_step"`
 }

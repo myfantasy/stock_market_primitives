@@ -26,8 +26,11 @@ type WingedSwingGroup struct {
 	LevelPrice   float64 `json:"level_price"`
 	PriceUp      float64 `json:"price_up"`
 	PriceDown    float64 `json:"price_down"`
-	PriceBuy     float64 `json:"price_buy"`
 	PriceBetween float64 `json:"price_between"`
+
+	PriceOnTheMarketUp           float64 `json:"price_on_the_market_up"`
+	PriceOnTheMarketDown         float64 `json:"price_on_the_market_down"`
+	PriceOnTheMarketDownByMarket float64 `json:"price_on_the_market_down_by_market"`
 
 	IsOnline bool `json:"is_online"`
 
@@ -111,16 +114,42 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 		}
 	}
 
-	if cmd == SetPriceBuy {
+	if cmd == SetPriceOnTheMarketDownByMarket {
 		fS, ok := params[""]
 		if ok {
 			f, er0 := strconv.ParseFloat(fS, 64)
 			if er0 != nil {
 				return false, smp.GenerateErrorE(500000617, er0, cmd, fS)
 			}
-			s.PriceBuy = f
+			s.PriceOnTheMarketDownByMarket = f
 		} else {
 			return false, smp.GenerateError(500000616, cmd)
+		}
+	}
+
+	if cmd == SetPriceOnTheMarketDown {
+		fS, ok := params[""]
+		if ok {
+			f, er0 := strconv.ParseFloat(fS, 64)
+			if er0 != nil {
+				return false, smp.GenerateErrorE(500000661, er0, cmd, fS)
+			}
+			s.PriceOnTheMarketDown = f
+		} else {
+			return false, smp.GenerateError(500000660, cmd)
+		}
+	}
+
+	if cmd == SetPriceOnTheMarketUp {
+		fS, ok := params[""]
+		if ok {
+			f, er0 := strconv.ParseFloat(fS, 64)
+			if er0 != nil {
+				return false, smp.GenerateErrorE(500000663, er0, cmd, fS)
+			}
+			s.PriceOnTheMarketUp = f
+		} else {
+			return false, smp.GenerateError(500000662, cmd)
 		}
 	}
 
@@ -175,9 +204,12 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				Ticker:       s.Ticker,
 				Volume:       s.Volume,
 
-				LevelPriceUp:   level + s.PriceUp,
-				LevelPriceDown: level + s.PriceDown,
-				LevelPriceBuy:  level + s.PriceBuy,
+				LevelPriceUp:   smp.Round(level+s.PriceUp, 6),
+				LevelPriceDown: smp.Round(level+s.PriceDown, 6),
+
+				LevelPriceOnTheMarketUp:           smp.Round(level+s.PriceOnTheMarketUp, 6),
+				LevelPriceOnTheMarketDown:         smp.Round(level+s.PriceOnTheMarketDown, 6),
+				LevelPriceOnTheMarketDownByMarket: smp.Round(level+s.PriceOnTheMarketDownByMarket, 6),
 
 				IsOnline: s.IsOnline,
 
@@ -264,9 +296,16 @@ func (s *WingedSwingGroup) AllowCommands() map[smp.Command]string {
 		smp.StopCommand:  "Стоп",
 		SetLevel:         "Установить уровень начала работы стратегии (с этого уровня происходит распределение стратегии) (параметр: уровень) пример: set_level 345.67",
 
-		SetPriceUp:      "Установить шаг продажи (параметр: уровень) пример: set_price_up 12.25",
-		SetPriceDown:    "Установить шаг покупки (параметр: уровень) пример: set_price_down -0.80",
-		SetPriceBuy:     "Установить шаг входа в рынок (параметр: уровень) пример: set_price_buy -50.80",
+		SetPriceUp:   "Установить шаг продажи (параметр: уровень) пример: set_price_up 12.25",
+		SetPriceDown: "Установить шаг покупки (параметр: уровень) пример: set_price_down -0.80",
+
+		SetPriceOnTheMarketUp: "Установить шаг входа в рынок (параметр: уровень) пример: " +
+			"set_price_on_the_market_up 60.20",
+		SetPriceOnTheMarketDown: "Установить шаг входа в рынок (параметр: уровень) пример: " +
+			"set_price_on_the_market_down -50.80",
+		SetPriceOnTheMarketDownByMarket: "Установить шаг входа в рынок (параметр: уровень) пример: " +
+			"set_price_on_the_market_down_by_market -10.80",
+
 		SetPriceBetween: "Установить шаг между стратегиями (параметр: уровень) пример: set_price_between 10.2",
 
 		SetVolume: "Установить объём (параметр: объём) пример set_vol 25",
@@ -281,6 +320,10 @@ func (s *WingedSwingGroup) AllowCommands() map[smp.Command]string {
 			"(параметры: f=[от шагов] t=[до шагов]) " +
 			"пример: set_out_of_market f=-4 t=8",
 	}
+}
+
+func (s *WingedSwingGroup) Description() string {
+	return `winged_swing_group - стратегия, группы качель`
 }
 
 func (s *WingedSwingGroup) Step(p smp.StepParams) (err *mft.Error) {

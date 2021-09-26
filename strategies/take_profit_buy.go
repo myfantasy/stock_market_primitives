@@ -112,7 +112,16 @@ func (s *TakeProfitBuy) AllowCommands() map[smp.Command]string {
 	}
 }
 
+func (s *TakeProfitBuy) Description() string {
+	return `take_profit_buy - стратегия, покупка профита
+	При достижении цены указанного уровня (цена покупки на рынке) выставляется заявка на покупку по указанной цене
+	При цене выше указанной не происходит ничего`
+}
+
 func (s *TakeProfitBuy) Step(p smp.StepParams) (err *mft.Error) {
+	if s.Volume == 0 {
+		return nil
+	}
 
 	if s.OrderId != "" {
 		status, prices, err := p.StatusBuyOrder(s.InstrumentId, s.Ticker, s.OrderId)

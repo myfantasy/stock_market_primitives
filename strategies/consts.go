@@ -14,8 +14,15 @@ const (
 
 	SetPriceUp      smp.Command = "set_price_up"
 	SetPriceDown    smp.Command = "set_price_down"
-	SetPriceBuy     smp.Command = "set_price_buy"
 	SetPriceBetween smp.Command = "set_price_between"
+
+	SetLevelPriceOnTheMarketUp           smp.Command = "set_level_on_the_market_up"
+	SetLevelPriceOnTheMarketDown         smp.Command = "set_level_on_the_market_down"
+	SetLevelPriceOnTheMarketDownByMarket smp.Command = "set_level_on_the_market_down_by_market"
+
+	SetPriceOnTheMarketUp           smp.Command = "set_price_on_the_market_up"
+	SetPriceOnTheMarketDown         smp.Command = "set_price_on_the_market_down"
+	SetPriceOnTheMarketDownByMarket smp.Command = "set_price_on_the_market_down_by_market"
 
 	Render smp.Command = "render"
 

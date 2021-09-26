@@ -41,6 +41,10 @@ var Errors map[int]string = map[int]string{
 	500000415: "strategies.WingedSwing: Command: `%v` param `%v` is not float64",
 	500000420: "strategies.WingedSwing: Command: `%v` param not set",
 	500000421: "strategies.WingedSwing: Command: `%v` param `%v` is not int",
+	500000430: "strategies.WingedSwing: Command: `%v` param not set",
+	500000431: "strategies.WingedSwing: Command: `%v` param `%v` is not float64",
+	500000432: "strategies.WingedSwing: Command: `%v` param not set",
+	500000433: "strategies.WingedSwing: Command: `%v` param `%v` is not float64",
 
 	500000500: "strategies.WingedSwing: Step: fail order book get",
 	500000501: "strategies.WingedSwing: Step: fail buy by price",
@@ -73,6 +77,10 @@ var Errors map[int]string = map[int]string{
 	500000647: "strategies.WingedSwing: Command: `%v` value `%v` is not int (param `%v`)",
 	500000650: "strategies.WingedSwing: Command: `%v` lavel `i` does not exists",
 	500000651: "strategies.WingedSwing: Command: `%v` lavel `i` value `%v` is not int (element `%v`)",
+	500000660: "strategies.WingedSwing: Command: `%v` param not set",
+	500000661: "strategies.WingedSwing: Command: `%v` param `%v` is not float64",
+	500000662: "strategies.WingedSwing: Command: `%v` param not set",
+	500000663: "strategies.WingedSwing: Command: `%v` param `%v` is not float64",
 
 	500000700: "strategies.WingedSwing: Step: fail do some nested steps faild: %v of %v",
 }

@@ -21,10 +21,12 @@ type WingedSwing struct {
 	InstrumentId string `json:"instrument_id"`
 	Ticker       string `json:"ticker"`
 
-	Volume         int     `json:"volume"`
-	LevelPriceUp   float64 `json:"level_price_up"`
-	LevelPriceDown float64 `json:"level_price_down"`
-	LevelPriceBuy  float64 `json:"level_price_buy"`
+	Volume                            int     `json:"volume"`
+	LevelPriceUp                      float64 `json:"level_price_up"`
+	LevelPriceDown                    float64 `json:"level_price_down"`
+	LevelPriceOnTheMarketDown         float64 `json:"level_price_on_the_market_down"`
+	LevelPriceOnTheMarketDownByMarket float64 `json:"level_price_on_the_market_down_by_market"`
+	LevelPriceOnTheMarketUp           float64 `json:"level_price_on_the_market_up"`
 
 	IsOnline bool `json:"is_online"`
 
@@ -72,16 +74,40 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 		return true, nil
 	}
 
-	if cmd == SetLevel {
+	if cmd == SetLevelPriceOnTheMarketUp {
 		fS, ok := params[""]
 		if ok {
 			f, er0 := strconv.ParseFloat(fS, 64)
 			if er0 != nil {
 				return false, smp.GenerateErrorE(500000411, er0, cmd, fS)
 			}
-			s.LevelPriceBuy = f
+			s.LevelPriceOnTheMarketUp = f
 		} else {
 			return false, smp.GenerateError(500000410, cmd)
+		}
+	}
+	if cmd == SetLevelPriceOnTheMarketDown {
+		fS, ok := params[""]
+		if ok {
+			f, er0 := strconv.ParseFloat(fS, 64)
+			if er0 != nil {
+				return false, smp.GenerateErrorE(500000431, er0, cmd, fS)
+			}
+			s.LevelPriceOnTheMarketDown = f
+		} else {
+			return false, smp.GenerateError(500000430, cmd)
+		}
+	}
+	if cmd == SetLevelPriceOnTheMarketDownByMarket {
+		fS, ok := params[""]
+		if ok {
+			f, er0 := strconv.ParseFloat(fS, 64)
+			if er0 != nil {
+				return false, smp.GenerateErrorE(500000433, er0, cmd, fS)
+			}
+			s.LevelPriceOnTheMarketDownByMarket = f
+		} else {
+			return false, smp.GenerateError(500000432, cmd)
 		}
 	}
 
@@ -132,14 +158,30 @@ func (s *WingedSwing) AllowCommands() map[smp.Command]string {
 		smp.ShowCommand:  "Отобразить",
 		smp.StartCommand: "Старт",
 		smp.StopCommand:  "Стоп",
-		SetLevel:         "Установить уровень начала работы стратегии (с этого уровня происходит покупка) (параметр: уровень) пример: set_level 345.67",
 		SetLevelDown:     "Установить уровень покупки (параметр: уровень) пример: set_level_down 372.25",
 		SetLevelUp:       "Установить уровень продажи (параметр: уровень) пример: set_level_up 392.80",
 		SetVolume:        "Установить объём (параметр: объём) пример set_vol 25",
+
+		SetLevelPriceOnTheMarketUp: "Установить уровень начала работы стратегии сверху " +
+			"(с этого уровня происходит покупка) (параметр: уровень) " +
+			"пример: set_level 420.90",
+		SetLevelPriceOnTheMarketDown: "Установить уровень начала работы стратегии снизу " +
+			"(с этого уровня происходит покупка) (параметр: уровень) " +
+			"пример: set_level 345.67",
+		SetLevelPriceOnTheMarketDownByMarket: "Установить уровень начала работы стратегии снизу по цене рынка " +
+			"(до этого уровня происходит покупка по рынку) (параметр: уровень) " +
+			"пример: set_level 370.10",
 	}
 }
 
+func (s *WingedSwing) Description() string {
+	return `winged_swing - стратегия, качель`
+}
+
 func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
+	if s.Volume == 0 {
+		return nil
+	}
 
 	if s.OrderIdBuy == "" && s.OrderIdSell == "" {
 		// Заполняем если установили объёмы руками
@@ -251,9 +293,9 @@ func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
 		}
 	} else {
 		if s.Volume-s.InMarket > 0 {
-			if ob.BuyPrice() <= s.LevelPriceBuy {
-				if ob.BuyPrice() < s.LevelPriceDown {
-					s.OrderIdBuy, err = p.BuyByPrice(s.InstrumentId, s.Ticker, s.Volume-s.InMarket, s.LevelPriceDown)
+			if ob.BuyPrice() >= s.LevelPriceOnTheMarketDown && ob.SellPrice() >= s.LevelPriceOnTheMarketUp {
+				if ob.BuyPrice() < s.LevelPriceOnTheMarketDownByMarket {
+					s.OrderIdBuy, err = p.BuyByMarket(s.InstrumentId, s.Ticker, s.Volume-s.InMarket)
 				} else if ob.SellPrice() < s.LevelPriceUp {
 					s.OrderIdBuy, err = p.BuyByPrice(s.InstrumentId, s.Ticker, s.Volume-s.InMarket, s.LevelPriceDown)
 				}
