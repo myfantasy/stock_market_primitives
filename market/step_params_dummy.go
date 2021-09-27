@@ -121,7 +121,7 @@ func (sp *StepParamsDummy) StatusBuyOrder(instrumentId string, ticker string, or
 			return smp.Canceled, []smp.LotPrices{}, nil
 		}
 		if a.Buy {
-			if sp.OrderBook.LimitUp >= a.Price {
+			if sp.OrderBook.BuyPrice() <= a.Price {
 				delete(sp.waitActions, orderId)
 				a.Time = sp.OrderBook.Time
 				sp.Actions = append(sp.Actions, a)
@@ -133,7 +133,7 @@ func (sp *StepParamsDummy) StatusBuyOrder(instrumentId string, ticker string, or
 			}
 			return smp.Wait, make([]smp.LotPrices, 0), nil
 		} else {
-			if sp.OrderBook.LimitDown <= a.Price {
+			if sp.OrderBook.SellPrice() >= a.Price {
 				delete(sp.waitActions, orderId)
 				a.Time = sp.OrderBook.Time
 				sp.Actions = append(sp.Actions, a)
@@ -153,6 +153,10 @@ func (sp *StepParamsDummy) StatusSellOrder(instrumentId string, ticker string, o
 }
 
 func (sp *StepParamsDummy) DoStep() bool {
+	if sp.waitActions == nil {
+		sp.waitActions = make(map[string]Action)
+	}
+
 	if sp.Position >= sp.Candles.Len()-1 {
 		return false
 	}

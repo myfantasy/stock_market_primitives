@@ -68,6 +68,7 @@ func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok b
 				return false, smp.GenerateErrorE(500000011, er0, cmd, fS)
 			}
 			s.LevelPrice = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000010, cmd)
 		}
@@ -81,6 +82,7 @@ func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok b
 				return false, smp.GenerateErrorE(500000021, er0, cmd, fS)
 			}
 			s.Volume = int(f)
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000020, cmd)
 		}
@@ -93,6 +95,7 @@ func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok b
 				return false, smp.GenerateErrorE(500000031, er0, cmd, fS)
 			}
 			s.StayInMarket = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000030, cmd)
 		}

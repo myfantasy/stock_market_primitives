@@ -82,6 +82,7 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 				return false, smp.GenerateErrorE(500000411, er0, cmd, fS)
 			}
 			s.LevelPriceOnTheMarketUp = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000410, cmd)
 		}
@@ -94,6 +95,7 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 				return false, smp.GenerateErrorE(500000431, er0, cmd, fS)
 			}
 			s.LevelPriceOnTheMarketDown = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000430, cmd)
 		}
@@ -106,6 +108,7 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 				return false, smp.GenerateErrorE(500000433, er0, cmd, fS)
 			}
 			s.LevelPriceOnTheMarketDownByMarket = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000432, cmd)
 		}
@@ -119,6 +122,7 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 				return false, smp.GenerateErrorE(500000413, er0, cmd, fS)
 			}
 			s.LevelPriceUp = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000412, cmd)
 		}
@@ -132,6 +136,7 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 				return false, smp.GenerateErrorE(500000415, er0, cmd, fS)
 			}
 			s.LevelPriceDown = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000414, cmd)
 		}
@@ -145,6 +150,7 @@ func (s *WingedSwing) Command(cmd smp.Command, params map[string]string) (ok boo
 				return false, smp.GenerateErrorE(500000421, er0, cmd, fS)
 			}
 			s.Volume = int(f)
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000420, cmd)
 		}
@@ -192,7 +198,7 @@ func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
 
 		if !s.IsBought && s.InMarket >= s.Volume {
 			s.IsBought = true
-			s.InMarketPrice = s.LevelPriceDown * float64(s.InMarket)
+			s.InMarketPrice = smp.Round(s.LevelPriceDown*float64(s.InMarket), 6)
 		}
 	}
 
@@ -211,7 +217,7 @@ func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
 
 		if status == smp.Complete || status == smp.Canceled {
 			s.InMarket += cnt
-			s.InMarketPrice += price
+			s.InMarketPrice = smp.Round(s.InMarketPrice+price, 6)
 			s.OrderIdBuy = ""
 			s.InMarketWait = 0
 			s.InMarketPriceWait = 0
@@ -241,13 +247,15 @@ func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
 
 		if status == smp.Complete || status == smp.Canceled {
 			s.InMarket -= cnt
-			s.InMarketPrice -= price
+			s.InMarketPrice = smp.Round(s.InMarketPrice-price, 6)
 			s.OrderIdSell = ""
 			s.InMarketWait = 0
 			s.InMarketPriceWait = 0
 
 			if s.InMarket <= 0 {
-				s.Profit = -s.InMarketPrice
+				s.Iteration++
+
+				s.Profit = smp.Round(s.Profit-s.InMarketPrice, 6)
 				s.InMarketPrice = 0
 				s.IsBought = false
 			}
@@ -283,7 +291,7 @@ func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
 
 	if s.IsBought {
 		if s.InMarket > 0 {
-			s.OrderIdSell, err = p.SellByPrice(s.InstrumentId, s.Ticker, s.InMarket, s.LevelPriceDown)
+			s.OrderIdSell, err = p.SellByPrice(s.InstrumentId, s.Ticker, s.InMarket, s.LevelPriceUp)
 			if err != nil {
 				s.OrderIdBuy = ""
 				return smp.GenerateErrorE(500000504, err)
@@ -293,10 +301,10 @@ func (s *WingedSwing) Step(p smp.StepParams) (err *mft.Error) {
 		}
 	} else {
 		if s.Volume-s.InMarket > 0 {
-			if ob.BuyPrice() >= s.LevelPriceOnTheMarketDown && ob.SellPrice() >= s.LevelPriceOnTheMarketUp {
+			if ob.BuyPrice() >= s.LevelPriceOnTheMarketDown && ob.SellPrice() <= s.LevelPriceOnTheMarketUp {
 				if ob.BuyPrice() < s.LevelPriceOnTheMarketDownByMarket {
 					s.OrderIdBuy, err = p.BuyByMarket(s.InstrumentId, s.Ticker, s.Volume-s.InMarket)
-				} else if ob.SellPrice() < s.LevelPriceUp {
+				} else {
 					s.OrderIdBuy, err = p.BuyByPrice(s.InstrumentId, s.Ticker, s.Volume-s.InMarket, s.LevelPriceDown)
 				}
 				if err != nil {

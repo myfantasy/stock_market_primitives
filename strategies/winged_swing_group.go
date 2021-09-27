@@ -83,6 +83,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000611, er0, cmd, fS)
 			}
 			s.LevelPrice = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000610, cmd)
 		}
@@ -96,6 +97,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000613, er0, cmd, fS)
 			}
 			s.PriceUp = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000612, cmd)
 		}
@@ -109,6 +111,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000615, er0, cmd, fS)
 			}
 			s.PriceDown = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000614, cmd)
 		}
@@ -122,6 +125,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000617, er0, cmd, fS)
 			}
 			s.PriceOnTheMarketDownByMarket = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000616, cmd)
 		}
@@ -135,6 +139,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000661, er0, cmd, fS)
 			}
 			s.PriceOnTheMarketDown = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000660, cmd)
 		}
@@ -148,6 +153,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000663, er0, cmd, fS)
 			}
 			s.PriceOnTheMarketUp = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000662, cmd)
 		}
@@ -161,6 +167,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000619, er0, cmd, fS)
 			}
 			s.PriceBetween = f
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000618, cmd)
 		}
@@ -174,6 +181,7 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				return false, smp.GenerateErrorE(500000621, er0, cmd, fS)
 			}
 			s.Volume = int(f)
+			return true, nil
 		} else {
 			return false, smp.GenerateError(500000620, cmd)
 		}
@@ -216,6 +224,8 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				Labels: map[string]string{"i": strconv.Itoa(int(i))},
 			})
 		}
+
+		return true, nil
 	}
 
 	if cmd == SetInMarket {
@@ -250,6 +260,8 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				s.Swings[i].InMarket = s.Swings[i].Volume
 			}
 		}
+
+		return true, nil
 	}
 
 	if cmd == SetOutOfMarket {
@@ -284,6 +296,8 @@ func (s *WingedSwingGroup) Command(cmd smp.Command, params map[string]string) (o
 				s.Swings[i].InMarket = 0
 			}
 		}
+
+		return true, nil
 	}
 
 	return false, smp.GenerateError(500000600, cmd)
@@ -294,36 +308,36 @@ func (s *WingedSwingGroup) AllowCommands() map[smp.Command]string {
 		smp.ShowCommand:  "Отобразить",
 		smp.StartCommand: "Старт",
 		smp.StopCommand:  "Стоп",
-		SetLevel:         "Установить уровень начала работы стратегии (с этого уровня происходит распределение стратегии) (параметр: уровень) пример: set_level 345.67",
+		SetLevel:         "Установить уровень начала работы стратегии (с этого уровня происходит распределение стратегии) (параметр: уровень) пример: `set_level 345.67`",
 
-		SetPriceUp:   "Установить шаг продажи (параметр: уровень) пример: set_price_up 12.25",
-		SetPriceDown: "Установить шаг покупки (параметр: уровень) пример: set_price_down -0.80",
+		SetPriceUp:   "Установить шаг продажи (параметр: уровень) пример: `set_price_up 12.25`",
+		SetPriceDown: "Установить шаг покупки (параметр: уровень) пример: `set_price_down -0.80`",
 
 		SetPriceOnTheMarketUp: "Установить шаг входа в рынок (параметр: уровень) пример: " +
-			"set_price_on_the_market_up 60.20",
+			"`set_price_on_the_market_up 60.20`",
 		SetPriceOnTheMarketDown: "Установить шаг входа в рынок (параметр: уровень) пример: " +
-			"set_price_on_the_market_down -50.80",
+			"`set_price_on_the_market_down -50.80`",
 		SetPriceOnTheMarketDownByMarket: "Установить шаг входа в рынок (параметр: уровень) пример: " +
-			"set_price_on_the_market_down_by_market -10.80",
+			"`set_price_on_the_market_down_by_market -10.80`",
 
-		SetPriceBetween: "Установить шаг между стратегиями (параметр: уровень) пример: set_price_between 10.2",
+		SetPriceBetween: "Установить шаг между стратегиями (параметр: уровень) пример: `set_price_between 10.2`",
 
-		SetVolume: "Установить объём (параметр: объём) пример set_vol 25",
+		SetVolume: "Установить объём (параметр: объём) пример `set_vol 25`",
 
 		Render: "Сгенерировать внутренние стратегии " +
-			"(параметры: f=[от шагов] t=[до шагов]) пример: render f=-5 t=10",
+			"(параметры: f=[от шагов] t=[до шагов]) пример: `render f=-5 t=10`",
 
 		SetInMarket: "Установить кол-во акций купленных на рынке, по максимальному объёму " +
 			"(параметры: f=[от шагов] t=[до шагов]) " +
-			"пример: set_in_market f=-4 t=8",
+			"пример: `set_in_market f=-4 t=8`",
 		SetOutOfMarket: "Установить кол-во акций купленных на рынке, в 0 " +
 			"(параметры: f=[от шагов] t=[до шагов]) " +
-			"пример: set_out_of_market f=-4 t=8",
+			"пример: `set_out_of_market f=-4 t=8`",
 	}
 }
 
 func (s *WingedSwingGroup) Description() string {
-	return `winged_swing_group - стратегия, группы качель`
+	return "`winged_swing_group`" + ` - стратегия, группы качель`
 }
 
 func (s *WingedSwingGroup) Step(p smp.StepParams) (err *mft.Error) {
@@ -335,7 +349,7 @@ func (s *WingedSwingGroup) Step(p smp.StepParams) (err *mft.Error) {
 	}
 
 	if err != nil {
-		return smp.GenerateErrorSubList(500000600, err.InternalErrors, len(err.InternalErrors), len(s.Swings))
+		return smp.GenerateErrorSubList(500000700, err.InternalErrors, len(err.InternalErrors), len(s.Swings))
 	}
 
 	return nil
