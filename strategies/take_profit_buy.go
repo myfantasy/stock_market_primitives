@@ -32,12 +32,20 @@ type TakeProfitBuy struct {
 	InMarketPriceWait float64 `json:"in_market_price_wait"`
 }
 
+func (s *TakeProfitBuy) Type() string {
+	return "take_profit_buy"
+}
+
+func (s *TakeProfitBuy) String() string {
+	return "take_profit_buy"
+}
+
 func (s *TakeProfitBuy) Status() smp.StartegyStatus {
 	return smp.StartegyStatus{
 		IsOnline: s.IsOnline,
 	}
 }
-func (s *TakeProfitBuy) String() string {
+func (s *TakeProfitBuy) Json() string {
 	b, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		panic(err)
@@ -45,19 +53,20 @@ func (s *TakeProfitBuy) String() string {
 
 	return string(b)
 }
-func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok bool, err *mft.Error) {
+func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (res smp.CommandResult, ok bool, err *mft.Error) {
 	if cmd == smp.ShowCommand {
-		return true, nil
+		res.Message = s.String()
+		return res, true, nil
 	}
 
 	if cmd == smp.StartCommand {
 		s.IsOnline = true
-		return true, nil
+		return res, true, nil
 	}
 
 	if cmd == smp.StopCommand {
 		s.IsOnline = false
-		return true, nil
+		return res, true, nil
 	}
 
 	if cmd == SetLevel {
@@ -65,12 +74,12 @@ func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok b
 		if ok {
 			f, er0 := strconv.ParseFloat(fS, 64)
 			if er0 != nil {
-				return false, smp.GenerateErrorE(500000011, er0, cmd, fS)
+				return res, false, smp.GenerateErrorE(500000011, er0, cmd, fS)
 			}
 			s.LevelPrice = f
-			return true, nil
+			return res, true, nil
 		} else {
-			return false, smp.GenerateError(500000010, cmd)
+			return res, false, smp.GenerateError(500000010, cmd)
 		}
 	}
 
@@ -79,12 +88,12 @@ func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok b
 		if ok {
 			f, er0 := strconv.ParseInt(fS, 10, 64)
 			if er0 != nil {
-				return false, smp.GenerateErrorE(500000021, er0, cmd, fS)
+				return res, false, smp.GenerateErrorE(500000021, er0, cmd, fS)
 			}
 			s.Volume = int(f)
-			return true, nil
+			return res, true, nil
 		} else {
-			return false, smp.GenerateError(500000020, cmd)
+			return res, false, smp.GenerateError(500000020, cmd)
 		}
 	}
 	if cmd == SetStayInMarket {
@@ -92,26 +101,26 @@ func (s *TakeProfitBuy) Command(cmd smp.Command, params map[string]string) (ok b
 		if ok {
 			f, er0 := strconv.ParseBool(fS)
 			if er0 != nil {
-				return false, smp.GenerateErrorE(500000031, er0, cmd, fS)
+				return res, false, smp.GenerateErrorE(500000031, er0, cmd, fS)
 			}
 			s.StayInMarket = f
-			return true, nil
+			return res, true, nil
 		} else {
-			return false, smp.GenerateError(500000030, cmd)
+			return res, false, smp.GenerateError(500000030, cmd)
 		}
 	}
 
-	return false, smp.GenerateError(500000000, cmd)
+	return res, false, smp.GenerateError(500000000, cmd)
 }
 
-func (s *TakeProfitBuy) AllowCommands() map[smp.Command]string {
-	return map[smp.Command]string{
-		smp.ShowCommand:  "Отобразить",
-		smp.StartCommand: "Старт",
-		smp.StopCommand:  "Стоп",
-		SetLevel:         "Установить уровень (параметр: уровень) пример: set_level 345.67",
-		SetVolume:        "Установить объём (параметр: объём) пример set_vol 25",
-		SetStayInMarket:  "Оставаться в рынке [выставлять заявку не дожидаясь приближения цены] (параметр: true/false) пример stay_in_market true",
+func (s *TakeProfitBuy) AllowCommands() map[smp.Command]smp.CommandInfo {
+	return map[smp.Command]smp.CommandInfo{
+		smp.ShowCommand:  {0, "Отобразить", "", ""},
+		smp.StartCommand: {1, "Старт", "", ""},
+		smp.StopCommand:  {2, "Стоп", "", ""},
+		SetLevel:         {3, "Установить уровень", "параметр: уровень", "set_level 345.67"},
+		SetVolume:        {4, "Установить объём", "параметр: объём", "set_vol 25"},
+		SetStayInMarket:  {5, "Оставаться в рынке [выставлять заявку не дожидаясь приближения цены]", "параметр: true/false", "stay_in_market true"},
 	}
 }
 
@@ -121,15 +130,15 @@ func (s *TakeProfitBuy) Description() string {
 	При цене выше указанной не происходит ничего`
 }
 
-func (s *TakeProfitBuy) Step(p smp.StepParams) (err *mft.Error) {
+func (s *TakeProfitBuy) Step(p smp.StepParams) (meta smp.MetaForStep, err *mft.Error) {
 	if s.Volume == 0 {
-		return nil
+		return meta, nil
 	}
 
 	if s.OrderId != "" {
-		status, prices, err := p.StatusBuyOrder(s.InstrumentId, s.Ticker, s.OrderId)
+		status, prices, err := p.StatusBuyOrder(s.InstrumentId, s.Ticker, s.OrderId, nil)
 		if err != nil {
-			return smp.GenerateErrorE(500000102, err)
+			return meta, smp.GenerateErrorE(500000102, err)
 		}
 
 		cnt := 0
@@ -139,6 +148,7 @@ func (s *TakeProfitBuy) Step(p smp.StepParams) (err *mft.Error) {
 			price += pr.Price * float64(pr.Count)
 		}
 
+		meta.HasChanges = true
 		if status == smp.Complete || status == smp.Canceled {
 			s.InMarket += cnt
 			s.InMarketPrice += price
@@ -152,35 +162,36 @@ func (s *TakeProfitBuy) Step(p smp.StepParams) (err *mft.Error) {
 	}
 
 	if !s.IsOnline {
-		return nil
+		return meta, nil
 	}
 
 	if s.OrderId != "" {
-		return nil
+		return meta, nil
 	}
 
 	ob, err := p.GetOrderBook(s.InstrumentId, s.Ticker)
 	if err != nil {
-		return smp.GenerateErrorE(500000100, err)
+		return meta, smp.GenerateErrorE(500000100, err)
 	}
 
 	if ob.TradeStatus != smp.NormalTrading {
-		return nil
+		return meta, nil
 	}
 
 	if len(ob.Bids) < 1 || len(ob.Asks) < 1 {
-		return nil
+		return meta, nil
 	}
 
 	if s.InMarket < s.Volume && s.OrderId != "" {
 		if s.StayInMarket ||
 			ob.SellPrice() <= s.LevelPrice {
-			s.OrderId, err = p.BuyByPrice(s.InstrumentId, s.Ticker, s.Volume-s.InMarket, s.LevelPrice)
+			meta.HasChanges = true
+			s.OrderId, err = p.BuyByPrice(s.InstrumentId, s.Ticker, s.Volume-s.InMarket, s.LevelPrice, nil)
 			if err != nil {
 				s.OrderId = ""
-				return smp.GenerateErrorE(500000101, err)
+				return meta, smp.GenerateErrorE(500000101, err)
 			}
 		}
 	}
-	return nil
+	return meta, nil
 }

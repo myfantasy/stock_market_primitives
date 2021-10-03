@@ -31,22 +31,35 @@ type LotPrices struct {
 	Price float64
 }
 
+type MetaForOperations struct {
+	NameOfStrategy string
+	IsStopLoss     bool
+}
+
 type StepParams interface {
 	GetCandles(instrumentId string, ticker string, dateFrom time.Time, dateTo time.Time) (cs Candles, err *mft.Error)
 	GetOrderBook(instrumentId string, ticker string) (ob *OrderBook, err *mft.Error)
 	GetInstrumentInfo(instrumentId string, ticker string) (instrumentInfo *InstrumentInfo, err *mft.Error)
 
-	BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error)
-	SellByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error)
+	BuyByMarket(instrumentId string, ticker string, cnt int,
+		meta *MetaForOperations) (orderId string, err *mft.Error)
+	SellByMarket(instrumentId string, ticker string, cnt int,
+		meta *MetaForOperations) (orderId string, err *mft.Error)
 
-	BuyByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error)
-	SellByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error)
+	BuyByPrice(instrumentId string, ticker string, cnt int, price float64,
+		meta *MetaForOperations) (orderId string, err *mft.Error)
+	SellByPrice(instrumentId string, ticker string, cnt int, price float64,
+		meta *MetaForOperations) (orderId string, err *mft.Error)
 
-	CancelBuyOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error)
-	CancelSellOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error)
+	CancelBuyOrder(instrumentId string, ticker string, orderId string,
+		meta *MetaForOperations) (ok bool, err *mft.Error)
+	CancelSellOrder(instrumentId string, ticker string, orderId string,
+		meta *MetaForOperations) (ok bool, err *mft.Error)
 
-	StatusBuyOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, prices []LotPrices, err *mft.Error)
-	StatusSellOrder(instrumentId string, ticker string, orderId string) (status StatusOrder, prices []LotPrices, err *mft.Error)
+	StatusBuyOrder(instrumentId string, ticker string, orderId string,
+		meta *MetaForOperations) (status StatusOrder, prices []LotPrices, err *mft.Error)
+	StatusSellOrder(instrumentId string, ticker string, orderId string,
+		meta *MetaForOperations) (status StatusOrder, prices []LotPrices, err *mft.Error)
 }
 
 type StartegyStatus struct {
@@ -61,12 +74,32 @@ const (
 	ShowCommand  Command = "show"
 )
 
+type MetaForStep struct {
+	IsStopLoss bool
+	HasChanges bool
+	Name       string
+	OpDescr    []string
+	SubMeta    []MetaForStep
+}
+type CommandInfo struct {
+	Order             int
+	Description       string
+	ParamsDescription string
+	Example           string
+}
+
+type CommandResult struct {
+	Message string
+}
+
 type Strategy interface {
-	Step(p StepParams) (err *mft.Error)
+	Step(p StepParams) (meta MetaForStep, err *mft.Error)
 	Status() StartegyStatus
 	String() string
-	Command(cmd Command, params map[string]string) (ok bool, err *mft.Error)
-	AllowCommands() map[Command]string
+	Type() string
+	Json() string
+	Command(cmd Command, params map[string]string) (res CommandResult, ok bool, err *mft.Error)
+	AllowCommands() map[Command]CommandInfo
 	Description() string
 }
 

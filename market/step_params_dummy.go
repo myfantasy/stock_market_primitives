@@ -44,7 +44,8 @@ func (sp *StepParamsDummy) GetInstrumentInfo(instrumentId string, ticker string)
 	return sp.InstrumentInfo, nil
 }
 
-func (sp *StepParamsDummy) BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
+func (sp *StepParamsDummy) BuyByMarket(instrumentId string, ticker string, cnt int,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	sp.Actions = append(sp.Actions, Action{
 		Buy:   true,
 		Cnt:   cnt,
@@ -53,7 +54,8 @@ func (sp *StepParamsDummy) BuyByMarket(instrumentId string, ticker string, cnt i
 	})
 	return "dummy_order_id", nil
 }
-func (sp *StepParamsDummy) SellByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
+func (sp *StepParamsDummy) SellByMarket(instrumentId string, ticker string, cnt int,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	sp.Actions = append(sp.Actions, Action{
 		Sell:  true,
 		Cnt:   cnt,
@@ -63,7 +65,8 @@ func (sp *StepParamsDummy) SellByMarket(instrumentId string, ticker string, cnt 
 	return "dummy_order_id", nil
 }
 
-func (sp *StepParamsDummy) BuyByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error) {
+func (sp *StepParamsDummy) BuyByPrice(instrumentId string, ticker string, cnt int, price float64,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	sp.nextId++
 	orderId = strconv.Itoa(sp.nextId)
 	sp.waitActions[orderId] = Action{
@@ -74,7 +77,8 @@ func (sp *StepParamsDummy) BuyByPrice(instrumentId string, ticker string, cnt in
 	}
 	return orderId, nil
 }
-func (sp *StepParamsDummy) SellByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error) {
+func (sp *StepParamsDummy) SellByPrice(instrumentId string, ticker string, cnt int, price float64,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	sp.nextId++
 	orderId = strconv.Itoa(sp.nextId)
 	sp.waitActions[orderId] = Action{
@@ -86,7 +90,8 @@ func (sp *StepParamsDummy) SellByPrice(instrumentId string, ticker string, cnt i
 	return orderId, nil
 }
 
-func (sp *StepParamsDummy) CancelBuyOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error) {
+func (sp *StepParamsDummy) CancelBuyOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (ok bool, err *mft.Error) {
 	_, ok = sp.waitActions[orderId]
 	if ok {
 		delete(sp.waitActions, orderId)
@@ -94,7 +99,8 @@ func (sp *StepParamsDummy) CancelBuyOrder(instrumentId string, ticker string, or
 	}
 	return false, mft.ErrorS("Not found")
 }
-func (sp *StepParamsDummy) CancelSellOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error) {
+func (sp *StepParamsDummy) CancelSellOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (ok bool, err *mft.Error) {
 	_, ok = sp.waitActions[orderId]
 	if ok {
 		delete(sp.waitActions, orderId)
@@ -103,7 +109,8 @@ func (sp *StepParamsDummy) CancelSellOrder(instrumentId string, ticker string, o
 	return false, mft.ErrorS("Not found")
 }
 
-func (sp *StepParamsDummy) StatusBuyOrder(instrumentId string, ticker string, orderId string) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
+func (sp *StepParamsDummy) StatusBuyOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
 	if orderId == "dummy_order_id" {
 		return smp.Complete, []smp.LotPrices{{
 			Count: 1,
@@ -148,8 +155,9 @@ func (sp *StepParamsDummy) StatusBuyOrder(instrumentId string, ticker string, or
 	}
 	return smp.Canceled, make([]smp.LotPrices, 0), nil
 }
-func (sp *StepParamsDummy) StatusSellOrder(instrumentId string, ticker string, orderId string) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
-	return sp.StatusBuyOrder(instrumentId, ticker, orderId)
+func (sp *StepParamsDummy) StatusSellOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
+	return sp.StatusBuyOrder(instrumentId, ticker, orderId, meta)
 }
 
 func (sp *StepParamsDummy) DoStep() bool {

@@ -28,28 +28,36 @@ func (vm *VirtualMarket) GetOrderBook(instrumentId string, ticker string) (ob *s
 func (vm *VirtualMarket) GetInstrumentInfo(instrumentId string, ticker string) (instrumentInfo *smp.InstrumentInfo, err *mft.Error) {
 	return vm.InstrumentInfo, nil
 }
-func (vm *VirtualMarket) BuyByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
+func (vm *VirtualMarket) BuyByMarket(instrumentId string, ticker string, cnt int,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	return "", nil
 }
-func (vm *VirtualMarket) SellByMarket(instrumentId string, ticker string, cnt int) (orderId string, err *mft.Error) {
+func (vm *VirtualMarket) SellByMarket(instrumentId string, ticker string, cnt int,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	return "", nil
 }
-func (vm *VirtualMarket) BuyByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error) {
+func (vm *VirtualMarket) BuyByPrice(instrumentId string, ticker string, cnt int, price float64,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	return "", nil
 }
-func (vm *VirtualMarket) SellByPrice(instrumentId string, ticker string, cnt int, price float64) (orderId string, err *mft.Error) {
+func (vm *VirtualMarket) SellByPrice(instrumentId string, ticker string, cnt int, price float64,
+	meta *smp.MetaForOperations) (orderId string, err *mft.Error) {
 	return "", nil
 }
-func (vm *VirtualMarket) CancelBuyOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error) {
+func (vm *VirtualMarket) CancelBuyOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (ok bool, err *mft.Error) {
 	return false, nil
 }
-func (vm *VirtualMarket) CancelSellOrder(instrumentId string, ticker string, orderId string) (ok bool, err *mft.Error) {
+func (vm *VirtualMarket) CancelSellOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (ok bool, err *mft.Error) {
 	return false, nil
 }
-func (vm *VirtualMarket) StatusBuyOrder(instrumentId string, ticker string, orderId string) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
+func (vm *VirtualMarket) StatusBuyOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
 	return smp.Complete, make([]smp.LotPrices, 0), nil
 }
-func (vm *VirtualMarket) StatusSellOrder(instrumentId string, ticker string, orderId string) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
+func (vm *VirtualMarket) StatusSellOrder(instrumentId string, ticker string, orderId string,
+	meta *smp.MetaForOperations) (status smp.StatusOrder, prices []smp.LotPrices, err *mft.Error) {
 	return smp.Complete, make([]smp.LotPrices, 0), nil
 }
 
